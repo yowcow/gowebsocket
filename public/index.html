@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+</head>
+<body>
+<h1>Hello world</h1>
+<form id="form">
+  <label>
+    Message:
+    <input type="text" id="msg" />
+    <button>Send</button>
+  </label>
+</form>
+<ul id="logs"></ul>
+<script>
+(function () {
+  var logs = document.getElementById('logs');
+  var writeLog = function (str) {
+    var log = document.createElement('li');
+    log.innerText = str;
+    logs.appendChild(log);
+  };
+
+  var form = document.getElementById('form')
+  var input = document.getElementById('msg');
+  var onSubmitCallback = function (e) {
+    var message = input.value;
+    ws.send(JSON.stringify({ text: message }));
+    writeLog('Sent: ' + message);
+    input.value = '';
+    e.preventDefault();
+  };
+
+  var ws = new WebSocket('ws://localhost:8888/ws');
+  ws.onopen = function () {
+    writeLog('Connected to server');
+  };
+  ws.onerror = function (e) {
+    console.error(e)
+  };
+  ws.onmessage = function (e) {
+    var message = JSON.parse(e.data);
+    writeLog('Received: ' + message.text)
+  };
+  ws.onclose = function (e) {
+    writeLog('Disconnected from server');
+    form.removeEventListener('submit', onSubmitCallback)
+    writeLog('Event listener has been removed');
+  };
+  form.addEventListener('submit', onSubmitCallback);
+})()
+</script>
+</body>
+</html>
