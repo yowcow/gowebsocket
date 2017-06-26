@@ -3,7 +3,7 @@ BINARY = gowebsocket
 .PHONY: $(BINARY) up test clean
 
 all: $(BINARY)
-	godep save
+	godep save -t -v ./handler
 
 $(BINARY):
 	go build
