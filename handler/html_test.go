@@ -12,7 +12,9 @@ import (
 func TestHtml(t *testing.T) {
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
-	Html(w, req)
+
+	handler := http.HandlerFunc(Html)
+	handler.ServeHTTP(w, req)
 
 	var re *regexp.Regexp
 
