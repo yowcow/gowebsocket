@@ -14,10 +14,12 @@ func TestHtml(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	Html(w, req)
 
+	var re *regexp.Regexp
+
+	re = regexp.MustCompile("^text/html;")
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, "text/html;charset=utf-8", w.Header().Get("content-type"))
+	assert.True(t, re.MatchString(w.Header().Get("content-type")))
 
-	re := regexp.MustCompile("^<!doctype html>")
-
+	re = regexp.MustCompile("^<!doctype html>")
 	assert.True(t, re.Match(w.Body.Bytes()))
 }
