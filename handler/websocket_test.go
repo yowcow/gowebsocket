@@ -10,27 +10,43 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWebSocket(t *testing.T) {
+func TestWebSocket_counts_conn(t *testing.T) {
 	handler := http.HandlerFunc(WebSocket)
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
 	dialer := &websocket.Dialer{}
+	message := &WsMessage{}
 	url := strings.Replace(server.URL, "http", "ws", 1)
-	conn, _, err := dialer.Dial(url, nil)
-	//defer conn.Close()
 
-	assert.Equal(t, nil, err)
+	conn1, _, _ := dialer.Dial(url, nil)
+	conn1.ReadJSON(message)
+	assert.Equal(t, "Hi, now I have 1 connection(s)", message.Text)
 
-	type Message struct {
-		Text string `json:"text"`
-	}
+	conn2, _, _ := dialer.Dial(url, nil)
+	conn2.ReadJSON(message)
+	assert.Equal(t, "Hi, now I have 2 connection(s)", message.Text)
+	conn2.Close()
 
-	input := Message{"hogehoge"}
-	conn.WriteJSON(&input)
+	conn3, _, _ := dialer.Dial(url, nil)
+	conn3.ReadJSON(message)
+	assert.Equal(t, "Hi, now I have 2 connection(s)", message.Text)
+}
 
-	output := Message{}
-	conn.ReadJSON(&output)
+func TestWebSocket_echos(t *testing.T) {
+	handler := http.HandlerFunc(WebSocket)
+	server := httptest.NewServer(handler)
+	defer server.Close()
 
-	assert.Equal(t, "You said 'hogehoge'", output.Text)
+	dialer := &websocket.Dialer{}
+	message := &WsMessage{}
+	url := strings.Replace(server.URL, "http", "ws", 1)
+
+	conn1, _, _ := dialer.Dial(url, nil)
+	conn1.ReadJSON(message)
+
+	message.Text = "hogehoge"
+	conn1.WriteJSON(message)
+	conn1.ReadJSON(message)
+	assert.Equal(t, "You said 'hogehoge'", message.Text)
 }
