@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
@@ -27,6 +28,8 @@ func TestWebSocket_counts_conn(t *testing.T) {
 	conn2.ReadJSON(message)
 	assert.Equal(t, "Hi, now I have 2 connection(s)", message.Text)
 	conn2.Close()
+
+	time.Sleep(time.Second)
 
 	conn3, _, _ := dialer.Dial(url, nil)
 	conn3.ReadJSON(message)
