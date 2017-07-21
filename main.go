@@ -16,7 +16,7 @@ func main() {
 
 	servemux := http.NewServeMux()
 	servemux.HandleFunc("/", handler.Html)
-	servemux.HandleFunc("/ws", handler.WebSocket)
+	servemux.HandleFunc("/ws", handler.PrepareWSHub())
 
 	fmt.Println("Booting app listening to port", port)
 
