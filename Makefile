@@ -12,7 +12,7 @@ up:
 	go run main.go
 
 test:
-	go test -v ./handler
+	go test -v ./...
 
 clean:
 	rm -rf $(BINARY)

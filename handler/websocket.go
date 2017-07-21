@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -29,6 +30,7 @@ type WSHub struct {
 }
 
 func (hub *WSHub) Start() {
+	tick := time.Tick(60 * time.Second)
 	for {
 		select {
 		case conn := <-hub.register:
@@ -37,6 +39,8 @@ func (hub *WSHub) Start() {
 			hub.UnregisterConnection(conn)
 		case envelope := <-hub.broadcast:
 			hub.BroadcastEnvelope(envelope)
+		case <-tick:
+			hub.StatusUpdate()
 		}
 	}
 }
@@ -47,12 +51,10 @@ func (hub *WSHub) RegisterConnection(conn *websocket.Conn) {
 		fmt.Println("connection registered to hub")
 	}
 
-	message := &WSMessage{
-		Text: fmt.Sprintf("Got a new connection. Now we have %d connection(s).", len(hub.conns)),
-	}
+	message := &WSMessage{"Got a new connection."}
 	envelope := &WSEnvelope{message, nil}
-
 	hub.BroadcastEnvelope(envelope)
+	hub.StatusUpdate()
 }
 
 func (hub *WSHub) UnregisterConnection(conn *websocket.Conn) {
@@ -64,12 +66,10 @@ func (hub *WSHub) UnregisterConnection(conn *websocket.Conn) {
 		fmt.Println("connection unregistered from hub")
 	}
 
-	message := &WSMessage{
-		Text: fmt.Sprintf("Got a connection disconnected. Now we have %d connection(s).", len(hub.conns)),
-	}
+	message := &WSMessage{"Got a connection disconnected."}
 	envelope := &WSEnvelope{message, nil}
-
 	hub.BroadcastEnvelope(envelope)
+	hub.StatusUpdate()
 }
 
 func (hub *WSHub) BroadcastEnvelope(envelope *WSEnvelope) {
@@ -84,7 +84,13 @@ func (hub *WSHub) BroadcastEnvelope(envelope *WSEnvelope) {
 	fmt.Println("message broadcasted")
 }
 
-func PrepareWSHub() http.HandlerFunc {
+func (hub *WSHub) StatusUpdate() {
+	message := &WSMessage{fmt.Sprintf("Now we have %d connection(s).", len(hub.conns))}
+	envelope := &WSEnvelope{message, nil}
+	hub.BroadcastEnvelope(envelope)
+}
+
+func PrepareWSHandler() http.HandlerFunc {
 	hub := &WSHub{
 		register:   make(chan *websocket.Conn),
 		unregister: make(chan *websocket.Conn),
@@ -114,9 +120,7 @@ func PrepareWSHub() http.HandlerFunc {
 
 			fmt.Println("got a message from client", input.Text)
 
-			message := &WSMessage{
-				Text: "Someone said '" + input.Text + "'",
-			}
+			message := &WSMessage{"Someone said '" + input.Text + "'"}
 			envelope := &WSEnvelope{message, conn}
 
 			hub.broadcast <- envelope
